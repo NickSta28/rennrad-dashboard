@@ -123,6 +123,11 @@ input,select,textarea,#yr,.cmpbar select{font-size:16px}
 nav button{font-size:13px;padding:0 6px}
 
 /* Kartenkopf: getönter Streifen oben, wie die Box Jahresziel */
-.card:not(.hero):not(.tintcard)>h2:first-child,.card:not(.hero):not(.tintcard)>.row:first-child:has(>h2){margin:-16px -18px 12px;padding:12px 18px;background:var(--tint);border-bottom:1px solid var(--tintLine);border-radius:23px 23px 0 0;color:var(--accent);font-size:15px}
+.card:not(.hero):not(.tintcard)>h2:first-child,.card:not(.hero):not(.tintcard)>.row:first-child:has(>h2){margin:-16px -18px 12px;padding:8px 18px;background:var(--tint);border-bottom:1px solid var(--tintLine);border-radius:23px 23px 0 0;color:var(--accent);font-size:15px}
 .card>.row:first-child:has(>h2) h2{margin:0;color:var(--accent);font-size:15px}
 .row+.wear{border-top:0;margin-top:0}
+
+.card:not(.hero):not(.tintcard)>h2:first-child,.card:not(.hero):not(.tintcard)>.row:first-child:has(>h2){font-size:14px}
+.card>.row:first-child:has(>h2) h2{font-size:14px}.card>.row:first-child:has(>h2) .link{font-size:12px;min-height:24px}
+.hero .an{margin-top:30px}
+.tbl th:nth-child(3),.tbl td:nth-child(3){font-weight:700;color:var(--ink)}

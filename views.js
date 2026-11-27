@@ -6,7 +6,7 @@ export const de = (n, d = 0) => Number(n).toLocaleString('de-DE', { minimumFract
 export const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export const dmy = (d) => (d ? d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4) : '–');
 const dm = (d) => d.slice(8, 10) + '.' + d.slice(5, 7) + '.';
-export const hm = (s) => (s ? `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}` : '–');
+export const hm = (s) => (s ? `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}:${String(Math.round(s % 60)).padStart(2, '0')}` : '–');
 const LV = [['#4C7A4A', '#E3F1E1', 'OK'], ['#C98A00', '#FBEFC9', 'Bald fällig'], ['#C0392B', '#F8DAD6', 'Wechsel fällig']];
 export const PARTS = { kette: ['Kette', 'img/kette.png'], ritzel: ['Ritzel', 'img/ritzel.png'], reifen: ['Reifen', 'img/reifen.png'], bremsscheibe: ['Bremsscheiben', 'img/bremse.png'] };
 const same = (a, b) => String(a) === String(b);
@@ -145,9 +145,10 @@ export function activityView(r, bikes, wheelsets) {
   <div class="card hero"><div class="row"><span class="chip ${art}">${esc(r.art)}</span><span class="sub">${r.uhrzeit ? r.uhrzeit.slice(0, 5) + ' Uhr' : ''}${r.ort ? ' · ' + esc(r.ort) : ''}</span></div>
     <h2 class="an">${esc(r.name || 'Fahrt')}</h2><div class="herobig"><b>${de(r.km || 0, 1)}</b><span>km</span></div></div>
   <div class="tiles">${tile('Fahrtzeit', hm(r.ride_time_s))}${tile('Ø Tempo', r.avg_speed ? de(r.avg_speed, 1) + ' km/h' : '–')}${tile('Max. Tempo', r.max_speed ? de(r.max_speed, 1) + ' km/h' : '–')}${tile('Ø Leistung', r.avg_power ? de(r.avg_power) + ' W' : '–')}${tile('Höhenmeter', r.elevation_m ? de(r.elevation_m) + ' hm' : '–')}${tile('Gesamtzeit', hm(r.total_time_s))}</div>
-  <div class="card list">${row('Rad', esc(bike?.label || '–'))}${row('Laufräder', esc(ws?.name || '–'))}${row('Strava-ID', r.strava_activity_id || '–')}</div>
+  <div class="card list">${row('Rad', esc(bike?.label || '–'))}${row('Laufräder', esc(ws?.name || '–'))}</div>
   ${meas.length ? `<div class="card list">${meas.join('')}</div>` : ''}
   ${r.beschreibung ? `<div class="card"><div class="sub">Beschreibung</div><p class="desc">${esc(r.beschreibung)}</p></div>` : ''}
+  ${r.strava_activity_id ? `<div class="card list">${row('Strava-ID', r.strava_activity_id)}</div>` : ''}
   ${r.strava_activity_id ? `<a class="linkbtn" href="https://www.strava.com/activities/${r.strava_activity_id}" target="_blank" rel="noopener">In Strava öffnen</a>` : ''}`;
 }
 
@@ -180,7 +181,7 @@ export function newView(bikes, wheelsets, links, rides, today, form = {}) {
     <div class="g2">${fld('f-place', 'Ort', 'z. B. München')}</div><div class="sub">Art</div>${chips('art', ['Training', 'Rennen', 'virtuell'].map((a) => ({ id: a, label: a })), form.art || 'Training')}</div>
   <button type="button" class="ghostbtn tint" id="more" aria-expanded="false">Details &amp; Messwerte ▾</button>
   <div id="morebox" hidden>
-    <div class="card"><h2>Details ${opt}</h2><div class="g2">${fld('f-name', 'Name', 'Fahrtname', 'text', '', 'grid-column:1/-1')}${fld('f-time', 'Uhrzeit', '08:30', 'numeric', 'Uhr')}${fld('f-hm', 'Höhenmeter', '0', 'numeric', 'hm')}${fld('f-fz', 'Fahrtzeit', '2:32', 'numeric', 'h:mm')}${fld('f-gz', 'Gesamtzeit', '2:45', 'numeric', 'h:mm')}${fld('f-avg', 'Ø Tempo', 'automatisch', 'decimal', 'km/h')}${fld('f-mx', 'Max. Tempo', '0,0', 'decimal', 'km/h')}${fld('f-pw', 'Ø Leistung', '0', 'numeric', 'W')}</div>${fld('f-desc', 'Beschreibung', 'Notizen zur Fahrt')}</div>
+    <div class="card"><h2>Details ${opt}</h2><div class="g2">${fld('f-name', 'Name', 'Fahrtname', 'text', '', 'grid-column:1/-1')}${fld('f-time', 'Uhrzeit', '08:30', 'numeric', 'Uhr')}${fld('f-hm', 'Höhenmeter', '0', 'numeric', 'hm')}${fld('f-fz', 'Fahrtzeit', '2:32:10', 'numeric', 'h:mm:ss')}${fld('f-gz', 'Gesamtzeit', '2:45:00', 'numeric', 'h:mm:ss')}${fld('f-avg', 'Ø Tempo', 'automatisch', 'decimal', 'km/h')}${fld('f-mx', 'Max. Tempo', '0,0', 'decimal', 'km/h')}${fld('f-pw', 'Ø Leistung', '0', 'numeric', 'W')}</div>${fld('f-desc', 'Beschreibung', 'Notizen zur Fahrt')}</div>
     <div class="card"><h2>Messwerte ${opt}</h2><div class="g2">${fld('f-hra', 'Ø Puls', '–', 'numeric', 'bpm')}${fld('f-hrm', 'Max. Puls', '–', 'numeric', 'bpm')}${fld('f-cada', 'Ø Trittfrequenz', '–', 'numeric', 'rpm')}${fld('f-cadm', 'Max. Trittfrequenz', '–', 'numeric', 'rpm')}${fld('f-tmp', 'Temperatur', '–', 'decimal', '°C')}${fld('f-np', 'Gewichtete Leistung', '–', 'numeric', 'W')}</div></div></div>
   <div class="card"><h2>Teile gewechselt?</h2><div class="sub">Setzt den Zähler des Teils ab dieser Fahrt auf 0 km.</div><div class="g2">${chg}</div></div>
   <div id="err"></div><button type="button" id="save" class="savebtn">Fahrt speichern</button>`;
