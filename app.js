@@ -1,9 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
-import { parseRows, summary, runImport } from './import.js';
-import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js';
-import { years, DEFAULT_LIMITS } from './compute.js';
-import { applyTheme, savedAccent, ACCENTS } from './theme.js';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=4';
+import { parseRows, summary, runImport } from './import.js?v=4';
+import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=4';
+import { years, DEFAULT_LIMITS } from './compute.js?v=4';
+import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=4';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const root = document.getElementById('app');
