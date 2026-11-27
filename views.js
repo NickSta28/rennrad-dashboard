@@ -106,7 +106,7 @@ export function bikesView(rides, bikes, wheelsets, links, changes, sel, limits, 
    return `<div class="stick">` + header('Räder', today) + `
   <div class="chips" role="tablist" aria-label="Rad wählen">${act.map((b) => `<button class="chipbtn${same(b.id, bike.id) ? ' on' : ''}${b.status !== 'aktiv' ? ' off' : ''}" data-bike="${b.id}" role="tab" aria-selected="${same(b.id, bike.id)}">${esc(b.label)}</button>`).join('')}</div></div>
   <div class="card tintcard">${bike.photo_path ? `<img class="bikeimg" src="${esc(bike.photo_path)}" alt="${esc(bike.full_name)}" loading="lazy">` : '<div class="ph" aria-hidden="true">🚲</div>'}
-    <div class="row"><h2 class="bn">${esc(bike.full_name || bike.label)}</h2><span class="chip ${bike.status === 'aktiv' ? 'ok' : 'mute'}">${esc(bike.status)}</span></div>
+    <div class="row"><h2 class="bn">${esc(bike.full_name || bike.label)}</h2><span class="chip ${bike.status === 'aktiv' ? 'ok' : 'warn'}">${esc(bike.status)}</span></div>
     <div class="herobig"><b>${de(st.km)}</b><span>km</span><em>${de(st.n)} Fahrten</em></div>
     <div class="trio"><div><span>Erste Fahrt</span><b>${dmy(st.first)}</b></div><div><span>Letzte Fahrt</span><b>${dmy(st.last)}</b></div><div><span>Pause</span><b>${bike.status === 'aktiv' ? Math.max(0, Math.round((today - new Date(st.last + 'T00:00:00Z')) / 864e5)) + ' Tage' : '–'}</b></div></div></div>
   <div class="card"><h2>Letzte Fahrten</h2>${rides.filter((r) => same(r.bike_id, bike.id)).sort((a, b) => (b.datum + (b.uhrzeit || '')).localeCompare(a.datum + (a.uhrzeit || ''))).slice(0, 5).map((r) => rideRow(r, bikes, `${dm(r.datum)} · ${de(r.elevation_m || 0)} Hm${r.avg_speed ? ' · ' + de(r.avg_speed, 1) + ' km/h' : ''}`)).join('')}</div>

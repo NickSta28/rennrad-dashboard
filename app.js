@@ -1,10 +1,10 @@
-import { openWheel } from './wheel.js?v=11';
+import { openWheel } from './wheel.js?v=12';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=11';
-import { parseRows, summary, runImport } from './import.js?v=11';
-import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=11';
-import { years, DEFAULT_LIMITS } from './compute.js?v=11';
-import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=11';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=12';
+import { parseRows, summary, runImport } from './import.js?v=12';
+import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=12';
+import { years, DEFAULT_LIMITS } from './compute.js?v=12';
+import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=12';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const root = document.getElementById('app');
@@ -45,7 +45,7 @@ async function stats() {
 }
 
 async function dataView() {
-  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-11</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
+  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-12</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
   <div class="card"><h2>Datenstand</h2><div id="st" class="sub">Wird geladen …</div></div>
   <div class="card"><h2>Rohdatei importieren</h2>
     <div class="sub">Die Datei wird nur in deinem Browser gelesen und unter deinem Login gespeichert.</div>
