@@ -2,7 +2,7 @@
 export const MON = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 export const MONL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 export const DEFAULT_LIMITS = { kette: [1500, 3000], ritzel: [2000, 4000], reifen: [1500, 3000], bremse: [2000, 4000] };
-export const CLASSES = [[0, 50, '< 50'], [50, 75, '50–75'], [75, 100, '75–100'], [100, 125, '100–125'], [125, 150, '125–150'], [150, 1e9, '≥ 150']];
+export const CLASSES = [[0, 50, '<50'], [50, 75, '–75'], [75, 100, '–100'], [100, 125, '–125'], [125, 150, '–150'], [150, 1e9, '150+']];
 
 const num = (v) => (v == null || v === '' ? 0 : Number(v));
 const yearOf = (d) => +d.slice(0, 4);
@@ -25,7 +25,7 @@ export function yearOverview(rides, bikes, year, today, goal = 4500) {
   const mon = months(s); const prev = months(rides.filter((r) => yearOf(r.datum) === year - 1));
   const bi = mon.indexOf(Math.max(...mon));
   const byBike = {}; s.forEach((r) => { byBike[r.bike_id] = (byBike[r.bike_id] || 0) + num(r.km); });
-  const shares = Object.entries(byBike).sort((a, b) => b[1] - a[1]).map(([id, v]) => ({ bike: bikes.find((b) => b.id === id), km: v, pct: km ? v / km * 100 : 0 }));
+  const shares = Object.entries(byBike).sort((a, b) => b[1] - a[1]).map(([id, v]) => ({ bike: bikes.find((b) => String(b.id) === String(id)), km: v, pct: km ? v / km * 100 : 0 }));
   const kmAt = (y, d) => sum(rides.filter((r) => yearOf(r.datum) === y && doy(r.datum) <= d), (r) => num(r.km));
   const others = years(rides).filter((y) => y !== year && y >= year - 2).map((y) => ({ year: y, km: kmAt(y, upTo), delta: kmAt(year, upTo) - kmAt(y, upTo) }));
   const total = daysInYear(year); const pace = goal * upTo / total;
@@ -55,9 +55,9 @@ export function pulseCard(rides) {
 export function wear(part, owner, rides, changes, limits = DEFAULT_LIMITS) {
   const isBike = part === 'kette' || part === 'bremsscheibe';
   const key = isBike ? 'bike_id' : 'wheelset_id'; const cfg = limits[part === 'bremsscheibe' ? 'bremse' : part];
-  const mine = rides.filter((r) => r[key] === owner);
+  const mine = rides.filter((r) => String(r[key]) === String(owner));
   if (!mine.length) return null;
-  const ch = changes.filter((c) => c.part === part && c[key] === owner).map((c) => c.datum).sort();
+  const ch = changes.filter((c) => c.part === part && String(c[key]) === String(owner)).map((c) => c.datum).sort();
   const since = ch.length ? ch[ch.length - 1] : mine.reduce((m, r) => (r.datum < m ? r.datum : m), mine[0].datum);
   const km = sum(mine.filter((r) => r.datum >= since), (r) => num(r.km));
   const lvl = km >= cfg[1] ? 2 : km >= cfg[0] ? 1 : 0;
@@ -65,7 +65,7 @@ export function wear(part, owner, rides, changes, limits = DEFAULT_LIMITS) {
 }
 
 export function bikeStats(rides, bike) {
-  const s = rides.filter((r) => r.bike_id === bike.id);
+  const s = rides.filter((r) => String(r.bike_id) === String(bike.id));
   if (!s.length) return { n: 0, km: 0 };
   const by = (f) => s.reduce((m, r) => (num(f(r)) > num(f(m)) ? r : m), s[0]);
   const sp = s.filter((r) => r.art !== 'virtuell');
@@ -76,4 +76,18 @@ export function bikeStats(rides, bike) {
     longest: by((r) => r.km), fastest: sp.length ? sp.reduce((m, r) => (num(r.avg_speed) > num(m.avg_speed) ? r : m), sp[0]) : null, climb: by((r) => r.elevation_m),
     perYear: Object.entries(perYear).sort((a, b) => b[0] - a[0]).map(([y, v]) => ({ year: +y, ...v })),
   };
+}
+
+// Vier Verschleißteile eines Rads: Kette und Bremsscheiben am Rad, Ritzel und Reifen am zuletzt gefahrenen Laufradsatz
+export function bikeWear(bike, rides, changes, wheelsets, limits) {
+  const mine = rides.filter((r) => String(r.bike_id) === String(bike.id));
+  const lastWs = mine.filter((r) => r.wheelset_id != null).sort((a, b) => b.datum.localeCompare(a.datum))[0];
+  const ws = lastWs && wheelsets.find((w) => String(w.id) === String(lastWs.wheelset_id));
+  const rows = [];
+  const add = (part, owner, label) => { const w = wear(part, owner, rides, changes, limits); if (w) rows.push({ ...w, owner: label }); };
+  add('kette', bike.id, null);
+  if (ws) add('ritzel', ws.id, ws.name);
+  if (ws) add('reifen', ws.id, ws.name);
+  add('bremsscheibe', bike.id, null);
+  return rows;
 }
