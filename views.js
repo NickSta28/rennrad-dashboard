@@ -18,12 +18,12 @@ export function header(title, today, withYear = '') {
   <div class="tools"><button class="rb" id="set" aria-label="Einstellungen">${svg('gear')}</button><button class="rb fill" id="plus" aria-label="Fahrt erfassen">${svg('plus', 20, 2.4)}</button>${withYear}</div></div>`;
 }
 
-function bars(vals, labels, { h = 90, prev = null, fmt = (v) => de(v), vlab = false } = {}) {
+function bars(vals, labels, { h = 90, prev = null, fmt = (v) => de(v), vlab = 0 } = {}) {
   const max = Math.max(1, ...vals, ...(prev || [0])); const w = 300; const bw = w / vals.length;
   const top = vlab ? 14 : 0;
   return `<svg viewBox="0 0 ${w} ${h + 18 + top}" class="chart" role="img" aria-label="Balkendiagramm"><g transform="translate(0 ${top})">${vals.map((v, i) => {
     const bh = v / max * h; const ph = prev ? prev[i] / max * h : 0;
-    return `${prev ? `<rect x="${i * bw + 1}" y="${h - ph}" width="${bw / 2 - 1}" height="${ph}" fill="var(--prior)" rx="2"/>` : ''}<rect x="${i * bw + (prev ? bw / 2 : 2)}" y="${h - bh}" width="${prev ? bw / 2 - 1 : bw - 4}" height="${bh}" fill="var(--accent)" rx="2"><title>${labels[i]}: ${fmt(v)}</title></rect><text x="${i * bw + bw / 2}" y="${h + 13}" text-anchor="middle" class="ax">${labels[i]}</text>${vlab ? `<text x="${i * bw + bw / 2}" y="${h - bh - 4}" text-anchor="middle" class="ax" style="font-weight:700;fill:var(--ink)">${fmt(v)}</text>` : ''}`;
+    return `${prev ? `<rect x="${i * bw + 1}" y="${h - ph}" width="${bw / 2 - 1}" height="${ph}" fill="var(--prior)" rx="2"/>` : ''}<rect x="${i * bw + (prev ? bw / 2 : 2)}" y="${h - bh}" width="${prev ? bw / 2 - 1 : bw - 4}" height="${bh}" fill="var(--accent)" rx="2"><title>${labels[i]}: ${fmt(v)}</title></rect><text x="${i * bw + bw / 2}" y="${h + 13}" text-anchor="middle" class="ax">${labels[i]}</text>${vlab && (v > 0 || !prev) ? `<text x="${i * bw + (prev ? bw * 0.75 : bw / 2)}" y="${h - bh - 4}" text-anchor="middle" class="ax" style="font-size:${vlab}px;font-weight:700;fill:var(--ink)">${fmt(v)}</text>` : ''}`;
   }).join('')}</g></svg>`;
 }
 
@@ -70,10 +70,10 @@ export function overviewView(rides, bikes, year, today, settings = {}) {
     <div class="kpi"><span>Höchster Ø-Speed</span><b>${o.speed ? de(o.speed.avg_speed, 1) : '–'}<small> km/h</small></b><em>${o.speed ? 'Fahrt im ' + MONL[+o.speed.datum.slice(5, 7) - 1] : ''}</em></div></div>
   <div class="card"><h2>Letzte Fahrten</h2>${o.last.map((r) => rideRow(r, bikes, `${dm(r.datum)} · ${esc(bikes.find((b) => same(b.id, r.bike_id))?.label || '')} · ${de(r.elevation_m || 0)} Hm${r.avg_speed ? ' · ' + de(r.avg_speed, 1) + ' km/h' : ''}`)).join('')}</div>
   <div class="card"><h2>Kilometer im Jahresverlauf</h2>${curve(o, avg)}${cmpBar}</div>
-  <div class="card"><h2>Kilometer je Monat</h2>${bars(o.mon, MON, { prev: o.prev })}
+  <div class="card"><h2>Kilometer je Monat</h2>${bars(o.mon, MON, { prev: o.prev, vlab: 8, fmt: (v) => de(Math.round(v)) })}
     <div class="legend"><span><i style="background:var(--accent)"></i>${year}</span><span><i style="background:var(--prior)"></i>${year - 1}</span></div>
     <div class="sub">Bester Monat: ${MONL[o.best.m]} mit ${de(o.best.km)} km</div></div>
-  <div class="card"><h2>Fahrten je Wochentag</h2>${bars(o.wd, ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], { h: 70, vlab: true, fmt: (v) => String(v) })}</div>
+  <div class="card"><h2>Fahrten je Wochentag</h2>${bars(o.wd, ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], { h: 70, vlab: 11, fmt: (v) => String(v) })}</div>
   <div class="card"><h2>Anteil je Rad</h2>${o.shares.map((s) => `<div class="share"><div class="row"><span>${esc(s.bike?.label || '?')}</span><b>${de(s.km)} km · ${Math.round(s.pct)} %</b></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>`).join('')}</div>
   <div class="card"><h2>Vergleich bis zum ${o.cur ? dm(today.toISOString().slice(0, 10)) : '31.12.'}</h2>${o.others.map((x) => `<div class="row cmp"><span>${x.year}: ${de(x.km)} km</span><b class="${x.delta >= 0 ? 'good' : 'bad'}">${x.delta >= 0 ? '+' : '−'}${de(Math.abs(x.delta))} km</b></div>`).join('')}
     <div class="row cmp"><span>Ziel-Pace: ${de(o.pace)} km</span><b class="${o.km - o.pace >= 0 ? 'good' : 'bad'}">${o.km - o.pace >= 0 ? '+' : '−'}${de(Math.abs(o.km - o.pace))} km</b></div></div>
