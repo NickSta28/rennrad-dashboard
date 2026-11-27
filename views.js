@@ -1,6 +1,6 @@
 // HTML-Erzeugung (reine Funktionen, Node-testbar)
-import { MON, MONL, CLASSES, MONTH_END, yearOverview, pulseCard, bikeWear, bikeStats, years, rangeAvg, DEFAULT_LIMITS } from './compute.js?v=4';
-import { ACCENTS } from './theme.js?v=4';
+import { MON, MONL, CLASSES, MONTH_END, yearOverview, pulseCard, bikeWear, bikeStats, years, rangeAvg, DEFAULT_LIMITS } from './compute.js?v=5';
+import { ACCENTS } from './theme.js?v=5';
 
 export const de = (n, d = 0) => Number(n).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
 export const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
