@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { parseRows, summary, runImport } from './import.js';
-import { overviewView, bikesView, activityView, settingsSheet, newView, de as _de } from './views.js';
+import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js';
 import { years, DEFAULT_LIMITS } from './compute.js';
 import { applyTheme, savedAccent, ACCENTS } from './theme.js';
 
@@ -85,7 +85,7 @@ async function dataView() {
 }
 
 
-const state = { cmp: null, tab: 'uebersicht', year: null, bike: null, view: null, db: null, scroll: 0, user: null, settings: { accent: ACCENTS[0][1], limits: DEFAULT_LIMITS, goal: 4500 } };
+const state = { fy: 'alle', q: '', cmp: null, tab: 'uebersicht', year: null, bike: null, view: null, db: null, scroll: 0, user: null, settings: { accent: ACCENTS[0][1], limits: DEFAULT_LIMITS, goal: 4500 } };
 const S = (v) => (v == null ? v : String(v));
 async function load() {
   const [rides, bikes, wheelsets, links, changes] = await Promise.all([
@@ -111,7 +111,7 @@ function persistSettings() {
   }, 500);
 }
 
-const TABS = [['uebersicht', 'Übersicht'], ['raeder', 'Räder'], ['daten', 'Daten']];
+const TABS = [['uebersicht', 'Übersicht'], ['raeder', 'Räder'], ['fahrten', 'Fahrten'], ['daten', 'Daten']];
 function tabbar() {
   document.querySelector('nav')?.remove();
   const n = document.createElement('nav'); n.setAttribute('aria-label', 'Hauptmenü');
@@ -138,6 +138,15 @@ async function shell() {
   }
   if (state.view?.type === 'new') { root.innerHTML = newView(d.bikes, d.wheelsets, d.links, d.rides, today, state.view.form); tabbar(); bindNew(); return; }
   const yrs = years(d.rides); if (!state.year) state.year = yrs[0] || today.getFullYear();
+  if (state.tab === 'fahrten') {
+    root.innerHTML = ridesView(d.rides, d.bikes, state.fy, state.q, today); tabbar();
+    root.querySelector('#set').onclick = openSettings; root.querySelector('#plus').onclick = openNew;
+    const rl = root.querySelector('#rl'); const bind = () => rl.querySelectorAll('[data-ride]').forEach((b) => { b.onclick = () => openRide(b.dataset.ride); });
+    const upd = () => { rl.innerHTML = ridesList(d.rides, d.bikes, state.fy, state.q); bind(); };
+    root.querySelector('#fy').onchange = (e) => { state.fy = e.target.value; upd(); };
+    let t; root.querySelector('#fq').oninput = (e) => { state.q = e.target.value; clearTimeout(t); t = setTimeout(upd, 150); };
+    bind(); return;
+  }
   root.innerHTML = state.tab === 'uebersicht' ? overviewView(d.rides, d.bikes, state.year, today, { goal: state.settings.goal, cmp: state.cmp })
     : bikesView(d.rides, d.bikes, d.wheelsets, d.links, d.changes, state.bike, lim, today);
   tabbar();

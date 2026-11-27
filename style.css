@@ -117,3 +117,7 @@ h1.small{font-size:24px;margin:4px 0 0}
 
 /* iOS zoomt in Eingabefelder und Auswahllisten unter 16 px und springt danach nicht sauber zurück (wie in der Weinkeller-App) */
 input,select,textarea,#yr,.cmpbar select{font-size:16px}
+
+.filter{display:flex;gap:8px;margin-top:12px}.filter select{flex:none}.filter input{flex:1;min-width:0;min-height:44px;border:1px solid var(--line);border-radius:14px;padding:0 12px;background:#fff;font-size:16px}
+.card.list2{padding:10px 16px}.mh{font:600 13px 'Inter Tight',Inter,sans-serif;color:var(--accent);margin:14px 0 2px}.mh:first-child{margin-top:4px}
+nav button{font-size:13px;padding:0 6px}

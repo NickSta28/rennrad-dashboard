@@ -118,6 +118,22 @@ export function bikesView(rides, bikes, wheelsets, links, changes, sel, limits, 
     <tbody>${st.perYear.map((y) => `<tr><td>${y.year}</td><td>${y.n}</td><td>${de(y.km)}</td>${y.cls.map((c) => `<td>${c || '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
 }
 
+export function ridesList(rides, bikes, year, q) {
+  const s = (q || '').trim().toLowerCase();
+  let list = rides.filter((r) => (year === 'alle' || String(r.datum.slice(0, 4)) === String(year)) && (!s || [r.name, r.ort, bikes.find((b) => same(b.id, r.bike_id))?.label, r.datum, dmy(r.datum)].some((x) => String(x || '').toLowerCase().includes(s))));
+  list.sort((a, b) => (b.datum + (b.uhrzeit || '')).localeCompare(a.datum + (a.uhrzeit || '')));
+  const total = list.length; const km = list.reduce((t, r) => t + Number(r.km || 0), 0); list = list.slice(0, 250);
+  let last = ''; const rows = list.map((r) => { const m = r.datum.slice(0, 7); const hd = m !== last ? `<div class="mh">${MONL[+m.slice(5) - 1]} ${m.slice(0, 4)}</div>` : ''; last = m;
+    return hd + rideRow(r, bikes, `${dm(r.datum)} · ${esc(bikes.find((b) => same(b.id, r.bike_id))?.label || '')}${r.elevation_m ? ' · ' + de(r.elevation_m) + ' Hm' : ''}`); }).join('');
+  return `<div class="sub" role="status">${de(total)} Fahrten · ${de(km)} km${total > 250 ? ' · es werden die neuesten 250 gezeigt, bitte Filter oder Suche eingrenzen' : ''}</div>${rows || '<div class="card">Keine Fahrten gefunden.</div>'}`;
+}
+
+export function ridesView(rides, bikes, year, q, today) {
+  const yrs = years(rides);
+  return header('Fahrten', today) + `<div class="filter"><select id="fy" aria-label="Jahr"><option value="alle"${year === 'alle' ? ' selected' : ''}>Alle Jahre</option>${yrs.map((y) => `<option${String(y) === String(year) ? ' selected' : ''}>${y}</option>`).join('')}</select>
+    <input id="fq" type="search" inputmode="search" placeholder="Suchen: Name, Ort, Rad, Datum" value="${esc(q || '')}" autocomplete="off" aria-label="Fahrten suchen"></div><div id="rl" class="card list2">${ridesList(rides, bikes, year, q)}</div>`;
+}
+
 export function activityView(r, bikes, wheelsets) {
   const bike = bikes.find((b) => same(b.id, r.bike_id)); const ws = wheelsets.find((w) => same(w.id, r.wheelset_id));
   const tile = (l, v) => `<div class="tile"><span>${l}</span><b>${v}</b></div>`;
@@ -129,7 +145,7 @@ export function activityView(r, bikes, wheelsets) {
   <div class="card hero"><div class="row"><span class="chip ${art}">${esc(r.art)}</span><span class="sub">${r.uhrzeit ? r.uhrzeit.slice(0, 5) + ' Uhr' : ''}${r.ort ? ' · ' + esc(r.ort) : ''}</span></div>
     <h2 class="an">${esc(r.name || 'Fahrt')}</h2><div class="herobig"><b>${de(r.km || 0, 1)}</b><span>km</span></div></div>
   <div class="tiles">${tile('Fahrtzeit', hm(r.ride_time_s))}${tile('Ø Tempo', r.avg_speed ? de(r.avg_speed, 1) + ' km/h' : '–')}${tile('Max. Tempo', r.max_speed ? de(r.max_speed, 1) + ' km/h' : '–')}${tile('Ø Leistung', r.avg_power ? de(r.avg_power) + ' W' : '–')}${tile('Höhenmeter', r.elevation_m ? de(r.elevation_m) + ' hm' : '–')}${tile('Gesamtzeit', hm(r.total_time_s))}</div>
-  <div class="card list">${row('Rad', esc(bike?.label || '–'))}${row('Laufräder', esc(ws?.name || '–'))}</div>
+  <div class="card list">${row('Rad', esc(bike?.label || '–'))}${row('Laufräder', esc(ws?.name || '–'))}${row('Strava-ID', r.strava_activity_id || '–')}</div>
   ${meas.length ? `<div class="card list">${meas.join('')}</div>` : ''}
   ${r.beschreibung ? `<div class="card"><div class="sub">Beschreibung</div><p class="desc">${esc(r.beschreibung)}</p></div>` : ''}
   ${r.strava_activity_id ? `<a class="linkbtn" href="https://www.strava.com/activities/${r.strava_activity_id}" target="_blank" rel="noopener">In Strava öffnen</a>` : ''}`;
