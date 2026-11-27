@@ -13,8 +13,8 @@ input[type=file]{padding:10px 12px}
 button{font:600 16px Inter,sans-serif;min-height:48px;border-radius:24px;border:0;background:var(--accent);color:#fff;padding:0 20px;cursor:pointer;margin-top:14px}
 button.ghost{background:var(--tint);color:var(--accent)}
 button:disabled{opacity:.5;cursor:default}
-.err{background:#F8DAD6;color:#8E2A1F;border-radius:14px;padding:10px 14px;font-size:14px;margin-top:12px}
-.ok{background:#E3F1E1;color:#1B5E2B;border-radius:14px;padding:10px 14px;font-size:14px;margin-top:12px}
+div.err{background:#F8DAD6;color:#8E2A1F;border-radius:14px;padding:10px 14px;font-size:14px;margin-top:12px}
+div.ok{background:#E3F1E1;color:#1B5E2B;border-radius:14px;padding:10px 14px;font-size:14px;margin-top:12px}
 dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:8px 0 0;font-size:14px}dt{color:var(--mute)}dd{margin:0;font-weight:600;text-align:right}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
 :root{--prior:#B9C6EA;--lvl1:#9DB5EE}
@@ -99,3 +99,17 @@ h1.small{font-size:24px;margin:4px 0 0}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}.btnrow button{margin:8px 0 0;min-height:42px;font-size:14px}
 
 .tbl table{font-size:12px}.tbl th,.tbl td{padding:6px 3px}.tbl th:nth-child(n+4),.tbl td:nth-child(n+4){text-align:center}
+
+/* 27.11. abends */
+.rb{width:44px;min-height:44px;height:44px;border-radius:22px}
+.rb svg{stroke-width:2.8}
+.an{margin-top:18px}
+.hero>.row{min-height:26px}
+.chg{position:relative;gap:6px;padding:6px 8px;font-size:12.5px}.chg img{width:26px;height:26px}.chg span{min-width:0}
+.chg .ck{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:11px;box-shadow:0 0 0 2px #fff}
+.cmpbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 2px;font-size:13px;color:var(--mute)}.cmpbar select{min-height:38px;font-size:14px;padding:0 10px}
+.wideonly{display:none}@media (min-width:768px){.wideonly{display:flex}}
+.legend i.dots{background:none;border-top:2px dotted var(--ink);height:0;vertical-align:middle;width:12px;border-radius:0}
+.sr{position:absolute;left:-9999px}
+.legend{flex-wrap:wrap;gap:6px 14px}.legend span{white-space:nowrap}
+.cmpbar>span:first-child{flex-basis:100%}

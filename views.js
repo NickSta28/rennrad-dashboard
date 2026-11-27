@@ -1,5 +1,5 @@
 // HTML-Erzeugung (reine Funktionen, Node-testbar)
-import { MON, MONL, CLASSES, yearOverview, pulseCard, bikeWear, bikeStats, years, DEFAULT_LIMITS } from './compute.js';
+import { MON, MONL, CLASSES, MONTH_END, yearOverview, pulseCard, bikeWear, bikeStats, years, rangeAvg, DEFAULT_LIMITS } from './compute.js';
 import { ACCENTS } from './theme.js';
 
 export const de = (n, d = 0) => Number(n).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -26,15 +26,19 @@ function bars(vals, labels, { h = 90, prev = null, fmt = (v) => de(v) } = {}) {
   }).join('')}</svg>`;
 }
 
-function curve(o) {
-  const w = 300, h = 120; const maxY = Math.max(o.goal, o.km, ...(o.cumPrev.length ? [o.cumPrev.at(-1)[1]] : [0])) * 1.05;
+function curve(o, avg) {
+  const w = 300, h = 120; const ends = o.cumYears.flatMap((y) => (y.pts.length ? [y.pts.at(-1)[1]] : [0]));
+  const maxY = Math.max(o.goal, ...ends, ...(avg ? avg.vals.filter((v) => v != null) : [0])) * 1.05;
   const X = (d) => d / o.total * w; const Y = (v) => h - v / maxY * h;
   const path = (pts) => 'M0,' + h + ' ' + pts.map(([d, v]) => `L${X(d).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${w} ${h + 4}" class="chart" role="img" aria-label="Kumulierte Kilometer im Jahresverlauf">
-    <line x1="0" y1="${h}" x2="${w}" y2="${Y(o.goal)}" stroke="var(--mute)" stroke-dasharray="4 4"/>
-    ${o.cumPrev.length ? `<path d="${path(o.cumPrev)}" fill="none" stroke="var(--prior)" stroke-width="2"/>` : ''}
-    <path d="${path(o.cum.length ? o.cum : [[0, 0]])}" fill="none" stroke="var(--accent)" stroke-width="2.5"/></svg>
-    <div class="legend"><span><i style="background:var(--accent)"></i>${o.year}</span><span><i style="background:var(--prior)"></i>${o.year - 1}</span><span><i class="dash"></i>Ziel ${de(o.goal)} km</span></div>`;
+  const cols = ['var(--accent)', 'var(--prior)', '#B8BDC7']; const wd = [2.8, 2, 2];
+  const lines = [...o.cumYears].reverse().map((y) => { const i = o.cumYears.indexOf(y); return y.pts.length ? `<path d="${path(y.pts)}" fill="none" stroke="${cols[i]}" stroke-width="${wd[i]}" stroke-linejoin="round"/>` : ''; }).join('');
+  const ap = avg ? avg.vals.map((v, i) => (v == null ? null : [MONTH_END[i], v])).filter(Boolean) : [];
+  const avgLine = ap.length ? `<polyline points="0,${h} ${ap.map(([d, v]) => `${X(d * o.total / 365).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"/>${ap.map(([d, v]) => `<circle cx="${X(d * o.total / 365).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.6" fill="var(--ink)"><title>Ø ${de(v)} km</title></circle>`).join('')}` : '';
+  const ticks = MONTH_END.map((d, i) => `<text x="${X(((i ? MONTH_END[i - 1] : 0) + d) / 2 * o.total / 365).toFixed(1)}" y="${h + 14}" text-anchor="middle" class="ax">${MON[i][0]}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h + 18}" class="chart" role="img" aria-label="Kumulierte Kilometer im Jahresverlauf">
+    <line x1="0" y1="${h}" x2="${w}" y2="${Y(o.goal)}" stroke="var(--mute)" stroke-width="1" stroke-dasharray="4 4"/>${lines}${avgLine}${ticks}</svg>
+    <div class="legend">${o.cumYears.map((y, i) => `<span><i style="background:${cols[i]}"></i>${y.year}</span>`).join('')}${avg ? `<span><i class="dots"></i>Ø ${avg.years > 1 ? 'Zeitraum' : 'Jahr'}</span>` : ''}<span><i class="dash"></i>Ziel ${de(o.goal)} km</span></div>`;
 }
 
 const rideRow = (r, bikes, sub) => `<button class="ride" data-ride="${r.id}"><div><b>${esc(r.name || 'Fahrt')}</b><span>${sub}</span></div><div class="rk"><b>${de(r.km || 0, 1)} km</b>${svg('next', 16, 2)}</div></button>`;
@@ -48,6 +52,10 @@ export function overviewView(rides, bikes, year, today, settings = {}) {
   const hs = o.cur ? [['Vorsprung', (o.ahead >= 0 ? '+' : '−') + de(Math.abs(o.ahead)) + ' %'], ['Noch offen', de(o.open) + ' km'], ['Nötig pro Woche', de(o.perWeek) + ' km']]
     : [['Ziel-Quote', de(o.pct) + ' %'], ['Differenz', (o.km >= o.goal ? '+' : '−') + de(Math.abs(o.km - o.goal)) + ' km'], ['Fahrten', de(o.n)]];
   const pc = pulseCard(rides);
+  const first = yrs[yrs.length - 1]; const cmp = settings.cmp || { from: first, to: Math.max(first, year - 1) };
+  const avg = settings.wide !== false ? rangeAvg(rides, cmp.from, cmp.to, today) : null;
+  const opts = (sel) => yrs.slice().reverse().map((y) => `<option${y === sel ? ' selected' : ''}>${y}</option>`).join('');
+  const cmpBar = settings.wide !== false ? `<div class="cmpbar"><span>Mittelwert über Zeitraum</span><label class="sr" for="cmp-from">Von</label><select id="cmp-from">${opts(cmp.from)}</select><span>bis</span><label class="sr" for="cmp-to">Bis</label><select id="cmp-to">${opts(cmp.to)}</select></div>` : '';
   return head(yearSel) + `
   <div class="card hero goal"><div class="row"><span class="lab">Jahresziel ${year}</span><span class="chip ${chip[1]}">${chip[0]}</span></div>
     <div class="herobig"><b>${de(o.km)}</b><span>km</span><em>von ${de(o.goal)} km</em></div>
@@ -60,7 +68,7 @@ export function overviewView(rides, bikes, year, today, settings = {}) {
     <div class="kpi"><span>Höhenmeter</span><b>${de(o.hm)}</b><em>Ø ${de(o.n ? o.hm / o.n : 0)} Hm je Fahrt</em></div>
     <div class="kpi"><span>Höchster Ø-Speed</span><b>${o.speed ? de(o.speed.avg_speed, 1) : '–'}<small> km/h</small></b><em>${o.speed ? 'Fahrt im ' + MONL[+o.speed.datum.slice(5, 7) - 1] : ''}</em></div></div>
   ${pc ? pulseHtml(pc) : ''}
-  <div class="card"><h2>Kilometer im Jahresverlauf</h2>${curve(o)}</div>
+  <div class="card"><h2>Kilometer im Jahresverlauf</h2>${curve(o, avg)}${cmpBar}</div>
   <div class="card"><h2>Kilometer je Monat</h2>${bars(o.mon, MON, { prev: o.prev })}
     <div class="legend"><span><i style="background:var(--accent)"></i>${year}</span><span><i style="background:var(--prior)"></i>${year - 1}</span></div>
     <div class="sub">Bester Monat: ${MONL[o.best.m]} mit ${de(o.best.km)} km</div></div>

@@ -32,13 +32,15 @@ export function yearOverview(rides, bikes, year, today, goal = 4500) {
   const cum = []; let acc = 0; const sorted = [...s].sort((a, b) => a.datum.localeCompare(b.datum));
   sorted.forEach((r) => { acc += num(r.km); cum.push([doy(r.datum), acc]); });
   const cumPrev = []; acc = 0; rides.filter((r) => yearOf(r.datum) === year - 1).sort((a, b) => a.datum.localeCompare(b.datum)).forEach((r) => { acc += num(r.km); cumPrev.push([doy(r.datum), acc]); });
+  const cumOf = (y) => { let a = 0; return rides.filter((r) => yearOf(r.datum) === y).sort((p, q) => p.datum.localeCompare(q.datum)).map((r) => { a += num(r.km); return [doy(r.datum), a]; }); };
+  const cumYears = [year, year - 1, year - 2].map((y) => ({ year: y, pts: cumOf(y) }));
   const weeksLeft = Math.max(1, Math.ceil((total - upTo) / 7));
   return {
     year, cur, n: s.length, km, hm, over100: s.filter((r) => num(r.km) >= 100).length, speed, mon, prev, best: { m: bi, km: mon[bi] },
     wd: Array.from({ length: 7 }, (_, i) => s.filter((r) => wdOf(r.datum) === i).length), shares, others,
     last: [...s].sort((a, b) => (b.datum + (b.uhrzeit || '')).localeCompare(a.datum + (a.uhrzeit || ''))).slice(0, 5),
     goal, pct: km / goal * 100, timePct: upTo / total * 100, pace, ahead: pace ? (km / pace - 1) * 100 : 0, open: Math.max(0, goal - km), perWeek: Math.max(0, goal - km) / weeksLeft,
-    cum, cumPrev, upTo, total,
+    cum, cumPrev, cumYears, upTo, total,
   };
 }
 
@@ -90,4 +92,21 @@ export function bikeWear(bike, rides, changes, wheelsets, limits) {
   if (ws) add('reifen', ws.id, ws.name);
   add('bremsscheibe', bike.id, null);
   return rows;
+}
+
+// Mittelwert der kumulierten Kilometer am Monatsende über alle Jahre von..bis (laufendes Jahr nur bis zum letzten vollen Monat)
+export const MONTH_END = [31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365];
+export function rangeAvg(rides, from, to, today) {
+  const t = today.toISOString().slice(0, 10); const out = [];
+  for (let m = 0; m < 12; m++) {
+    const vals = [];
+    for (let y = Math.min(from, to); y <= Math.max(from, to); y++) {
+      const last = new Date(Date.UTC(y, m + 1, 0)).toISOString().slice(0, 10);
+      if (last > t) continue;
+      const ys = rides.filter((r) => yearOf(r.datum) === y); if (!ys.length) continue;
+      vals.push(sum(ys.filter((r) => r.datum <= last), (r) => num(r.km)));
+    }
+    out.push(vals.length ? sum(vals, (v) => v) / vals.length : null);
+  }
+  return { vals: out, years: Math.abs(to - from) + 1 };
 }

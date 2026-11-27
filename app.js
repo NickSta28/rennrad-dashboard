@@ -85,7 +85,7 @@ async function dataView() {
 }
 
 
-const state = { tab: 'uebersicht', year: null, bike: null, view: null, db: null, scroll: 0, user: null, settings: { accent: ACCENTS[0][1], limits: DEFAULT_LIMITS, goal: 4500 } };
+const state = { cmp: null, tab: 'uebersicht', year: null, bike: null, view: null, db: null, scroll: 0, user: null, settings: { accent: ACCENTS[0][1], limits: DEFAULT_LIMITS, goal: 4500 } };
 const S = (v) => (v == null ? v : String(v));
 async function load() {
   const [rides, bikes, wheelsets, links, changes] = await Promise.all([
@@ -138,11 +138,13 @@ async function shell() {
   }
   if (state.view?.type === 'new') { root.innerHTML = newView(d.bikes, d.wheelsets, d.links, d.rides, today, state.view.form); tabbar(); bindNew(); return; }
   const yrs = years(d.rides); if (!state.year) state.year = yrs[0] || today.getFullYear();
-  root.innerHTML = state.tab === 'uebersicht' ? overviewView(d.rides, d.bikes, state.year, today, { goal: state.settings.goal })
+  root.innerHTML = state.tab === 'uebersicht' ? overviewView(d.rides, d.bikes, state.year, today, { goal: state.settings.goal, cmp: state.cmp })
     : bikesView(d.rides, d.bikes, d.wheelsets, d.links, d.changes, state.bike, lim, today);
   tabbar();
   root.querySelector('#set').onclick = openSettings; root.querySelector('#plus').onclick = openNew;
   root.querySelectorAll('[data-open-settings]').forEach((b) => { b.onclick = openSettings; });
+  const cf = root.querySelector('#cmp-from'), ct = root.querySelector('#cmp-to');
+  if (cf && ct) { const chg = () => { const y = window.scrollY; state.cmp = { from: +cf.value, to: +ct.value }; shell().then(() => window.scrollTo(0, y)); }; cf.onchange = chg; ct.onchange = chg; }
   const yr = root.querySelector('#yr'); if (yr) yr.onchange = () => { const y = window.scrollY; state.year = +yr.value; shell().then(() => window.scrollTo(0, y)); };
   root.querySelectorAll('[data-bike]').forEach((b) => { b.onclick = () => { const y = window.scrollY; state.bike = b.dataset.bike; shell().then(() => window.scrollTo(0, y)); }; });
   root.querySelectorAll('[data-ride]').forEach((b) => { b.onclick = () => openRide(b.dataset.ride); });
@@ -236,3 +238,11 @@ async function boot() {
 }
 const { data } = await sb.auth.getSession();
 if (data.session) boot(); else loginView();
+
+let lastTap = 0;
+document.addEventListener('touchend', (e) => {
+  const n = Date.now();
+  if (n - lastTap < 350 && !e.target.closest('button,a,input,select,textarea,label')) e.preventDefault();
+  lastTap = n;
+}, { passive: false });
+['gesturestart', 'gesturechange', 'gestureend'].forEach((g) => document.addEventListener(g, (e) => e.preventDefault()));
