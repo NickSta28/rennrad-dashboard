@@ -1,10 +1,10 @@
-import { openWheel } from './wheel.js?v=10';
+import { openWheel } from './wheel.js?v=11';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=10';
-import { parseRows, summary, runImport } from './import.js?v=10';
-import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=10';
-import { years, DEFAULT_LIMITS } from './compute.js?v=10';
-import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=10';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=11';
+import { parseRows, summary, runImport } from './import.js?v=11';
+import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=11';
+import { years, DEFAULT_LIMITS } from './compute.js?v=11';
+import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=11';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const root = document.getElementById('app');
@@ -45,7 +45,7 @@ async function stats() {
 }
 
 async function dataView() {
-  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-10</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
+  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-11</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
   <div class="card"><h2>Datenstand</h2><div id="st" class="sub">Wird geladen …</div></div>
   <div class="card"><h2>Rohdatei importieren</h2>
     <div class="sub">Die Datei wird nur in deinem Browser gelesen und unter deinem Login gespeichert.</div>
@@ -144,7 +144,7 @@ async function shell() {
         ev.target.disabled = true; ev.target.textContent = 'Wird gelöscht …';
         const { error } = await sb.schema('rad').from('rides').delete().eq('id', Number(r.id));
         if (error) { box.querySelector('#del-err').innerHTML = `<div class="err">Löschen fehlgeschlagen: ${esc(error.message)}</div>`; ev.target.disabled = false; ev.target.textContent = 'Ja, löschen'; return; }
-        d.rides = d.rides.filter((x) => x.id !== r.id); state.view = null; shell(); window.scrollTo(0, state.scroll || 0);
+        d.rides = d.rides.filter((x) => x.id !== r.id); d.changes = d.changes.filter((c) => String(c.ride_id) !== String(r.id)); state.view = null; shell(); window.scrollTo(0, state.scroll || 0);
       };
     };
     return;
@@ -249,10 +249,10 @@ function bindNew() {
     if (error) { btn.disabled = false; btn.textContent = 'Fahrt speichern'; return fail('Speichern fehlgeschlagen: ' + error.message); }
     let chgTxt = '';
     if (chg.length) {
-      const rows = chg.map((p) => ({ part: p, datum, note: 'bei Fahrt erfasst', ...((p === 'ritzel' || p === 'reifen') ? { wheelset_id: Number(ws) } : { bike_id: Number(bike) }) }));
+      const rows = chg.map((p) => ({ part: p, datum, note: 'bei Fahrt erfasst', ride_id: ins.id, ...((p === 'ritzel' || p === 'reifen') ? { wheelset_id: Number(ws) } : { bike_id: Number(bike) }) }));
       const { data: cins, error: e2 } = await sb.schema('rad').from('component_changes').insert(rows).select();
       if (e2) chgTxt = 'Die Fahrt ist gespeichert, die Teilewechsel nicht: ' + e2.message;
-      else { cins.forEach((c) => d.changes.push({ ...c, bike_id: S(c.bike_id), wheelset_id: S(c.wheelset_id) })); chgTxt = 'Gewechselt: ' + chg.map((p) => ({ kette: 'Kette', ritzel: 'Ritzel', reifen: 'Reifen', bremsscheibe: 'Bremsscheiben' }[p])).join(', '); }
+      else { cins.forEach((c) => d.changes.push({ ...c, bike_id: S(c.bike_id), wheelset_id: S(c.wheelset_id), ride_id: S(c.ride_id) })); chgTxt = 'Gewechselt: ' + chg.map((p) => ({ kette: 'Kette', ritzel: 'Ritzel', reifen: 'Reifen', bremsscheibe: 'Bremsscheiben' }[p])).join(', '); }
     }
     ins.id = S(ins.id); ins.bike_id = S(ins.bike_id); ins.wheelset_id = S(ins.wheelset_id); d.rides.push(ins); state.year = +datum.slice(0, 4);
     const bl = d.bikes.find((b) => b.id === ins.bike_id)?.label || '';

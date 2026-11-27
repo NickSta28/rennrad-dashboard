@@ -63,6 +63,7 @@ create table rad.component_changes (
   wheelset_id bigint references rad.wheelsets(id) on delete cascade,
   datum date not null,
   note text,
+  ride_id bigint references rad.rides(id) on delete cascade, -- Wechsel bei Fahrt erfasst: wird mit der Fahrt gelöscht
   check ((bike_id is not null) <> (wheelset_id is not null))
 );
 create table rad.settings (
