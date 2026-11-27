@@ -239,10 +239,3 @@ async function boot() {
 const { data } = await sb.auth.getSession();
 if (data.session) boot(); else loginView();
 
-let lastTap = 0;
-document.addEventListener('touchend', (e) => {
-  const n = Date.now();
-  if (n - lastTap < 350 && !e.target.closest('button,a,input,select,textarea,label')) e.preventDefault();
-  lastTap = n;
-}, { passive: false });
-['gesturestart', 'gesturechange', 'gestureend'].forEach((g) => document.addEventListener(g, (e) => e.preventDefault()));

@@ -42,7 +42,8 @@ select{min-height:44px;border:1px solid var(--line);border-radius:14px;padding:0
 .tbl{overflow-x:auto}table{border-collapse:collapse;font-size:13px;width:100%}th,td{padding:6px 8px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--mute);font-weight:500}tr+tr td{border-top:1px solid var(--line)}
 /* ---- Überarbeitung 27.11. ---- */
 :root{--tintLine:#BBCBF4}
-html,body,*{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;max-width:100%}
+*{-webkit-tap-highlight-color:transparent}
 .grow{flex:1;min-width:0}
 h1.small{font-size:24px;margin:4px 0 0}
 .top{align-items:flex-end;min-height:64px}
@@ -113,3 +114,6 @@ h1.small{font-size:24px;margin:4px 0 0}
 .sr{position:absolute;left:-9999px}
 .legend{flex-wrap:wrap;gap:6px 14px}.legend span{white-space:nowrap}
 .cmpbar>span:first-child{flex-basis:100%}
+
+/* iOS zoomt in Eingabefelder und Auswahllisten unter 16 px und springt danach nicht sauber zurück (wie in der Weinkeller-App) */
+input,select,textarea,#yr,.cmpbar select{font-size:16px}
