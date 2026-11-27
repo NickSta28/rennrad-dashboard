@@ -134,3 +134,7 @@ nav button{font-size:13px;padding:0 6px}
 
 .rec .rico{flex:none;width:46px;height:46px;display:block}.rec .rico img{width:100%;height:100%;display:block;mix-blend-mode:multiply}
 .rec .rv{width:92px}
+.tbl th:nth-child(3),.tbl td:nth-child(3){background:#ececee}
+.card:not(.hero):not(.tintcard)>h2:first-child,.card:not(.hero):not(.tintcard)>.row:first-child:has(>h2){font-size:15px}
+.card>.row:first-child:has(>h2) h2{font-size:15px}
+.rec{min-height:54px;padding:6px 0;gap:12px}.rec .rico{width:38px;height:38px}.rec .rv{width:88px}

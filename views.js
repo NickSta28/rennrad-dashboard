@@ -18,12 +18,13 @@ export function header(title, today, withYear = '') {
   <div class="tools"><button class="rb" id="set" aria-label="Einstellungen">${svg('gear')}</button><button class="rb fill" id="plus" aria-label="Fahrt erfassen">${svg('plus', 20, 2.4)}</button>${withYear}</div></div>`;
 }
 
-function bars(vals, labels, { h = 90, prev = null, fmt = (v) => de(v) } = {}) {
+function bars(vals, labels, { h = 90, prev = null, fmt = (v) => de(v), vlab = false } = {}) {
   const max = Math.max(1, ...vals, ...(prev || [0])); const w = 300; const bw = w / vals.length;
-  return `<svg viewBox="0 0 ${w} ${h + 18}" class="chart" role="img" aria-label="Balkendiagramm">${vals.map((v, i) => {
+  const top = vlab ? 14 : 0;
+  return `<svg viewBox="0 0 ${w} ${h + 18 + top}" class="chart" role="img" aria-label="Balkendiagramm"><g transform="translate(0 ${top})">${vals.map((v, i) => {
     const bh = v / max * h; const ph = prev ? prev[i] / max * h : 0;
-    return `${prev ? `<rect x="${i * bw + 1}" y="${h - ph}" width="${bw / 2 - 1}" height="${ph}" fill="var(--prior)" rx="2"/>` : ''}<rect x="${i * bw + (prev ? bw / 2 : 2)}" y="${h - bh}" width="${prev ? bw / 2 - 1 : bw - 4}" height="${bh}" fill="var(--accent)" rx="2"><title>${labels[i]}: ${fmt(v)}</title></rect><text x="${i * bw + bw / 2}" y="${h + 13}" text-anchor="middle" class="ax">${labels[i]}</text>`;
-  }).join('')}</svg>`;
+    return `${prev ? `<rect x="${i * bw + 1}" y="${h - ph}" width="${bw / 2 - 1}" height="${ph}" fill="var(--prior)" rx="2"/>` : ''}<rect x="${i * bw + (prev ? bw / 2 : 2)}" y="${h - bh}" width="${prev ? bw / 2 - 1 : bw - 4}" height="${bh}" fill="var(--accent)" rx="2"><title>${labels[i]}: ${fmt(v)}</title></rect><text x="${i * bw + bw / 2}" y="${h + 13}" text-anchor="middle" class="ax">${labels[i]}</text>${vlab ? `<text x="${i * bw + bw / 2}" y="${h - bh - 4}" text-anchor="middle" class="ax" style="font-weight:700;fill:var(--ink)">${fmt(v)}</text>` : ''}`;
+  }).join('')}</g></svg>`;
 }
 
 function curve(o, avg) {
@@ -67,16 +68,16 @@ export function overviewView(rides, bikes, year, today, settings = {}) {
     <div class="kpi"><span>Kilometer</span><b>${de(o.km)}</b><em>Ø ${de(o.n ? o.km / o.n : 0, 1)} km je Fahrt</em></div>
     <div class="kpi"><span>Höhenmeter</span><b>${de(o.hm)}</b><em>Ø ${de(o.n ? o.hm / o.n : 0)} Hm je Fahrt</em></div>
     <div class="kpi"><span>Höchster Ø-Speed</span><b>${o.speed ? de(o.speed.avg_speed, 1) : '–'}<small> km/h</small></b><em>${o.speed ? 'Fahrt im ' + MONL[+o.speed.datum.slice(5, 7) - 1] : ''}</em></div></div>
-  ${pc ? pulseHtml(pc) : ''}
+  <div class="card"><h2>Letzte Fahrten</h2>${o.last.map((r) => rideRow(r, bikes, `${dm(r.datum)} · ${esc(bikes.find((b) => same(b.id, r.bike_id))?.label || '')} · ${de(r.elevation_m || 0)} Hm${r.avg_speed ? ' · ' + de(r.avg_speed, 1) + ' km/h' : ''}`)).join('')}</div>
   <div class="card"><h2>Kilometer im Jahresverlauf</h2>${curve(o, avg)}${cmpBar}</div>
   <div class="card"><h2>Kilometer je Monat</h2>${bars(o.mon, MON, { prev: o.prev })}
     <div class="legend"><span><i style="background:var(--accent)"></i>${year}</span><span><i style="background:var(--prior)"></i>${year - 1}</span></div>
     <div class="sub">Bester Monat: ${MONL[o.best.m]} mit ${de(o.best.km)} km</div></div>
-  <div class="card"><h2>Fahrten je Wochentag</h2>${bars(o.wd, ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], { h: 70 })}</div>
+  <div class="card"><h2>Fahrten je Wochentag</h2>${bars(o.wd, ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], { h: 70, vlab: true, fmt: (v) => String(v) })}</div>
   <div class="card"><h2>Anteil je Rad</h2>${o.shares.map((s) => `<div class="share"><div class="row"><span>${esc(s.bike?.label || '?')}</span><b>${de(s.km)} km · ${Math.round(s.pct)} %</b></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>`).join('')}</div>
-  <div class="card"><h2>Letzte Fahrten</h2>${o.last.map((r) => rideRow(r, bikes, `${dm(r.datum)} · ${esc(bikes.find((b) => same(b.id, r.bike_id))?.label || '')} · ${de(r.elevation_m || 0)} Hm${r.avg_speed ? ' · ' + de(r.avg_speed, 1) + ' km/h' : ''}`)).join('')}</div>
   <div class="card"><h2>Vergleich bis zum ${o.cur ? dm(today.toISOString().slice(0, 10)) : '31.12.'}</h2>${o.others.map((x) => `<div class="row cmp"><span>${x.year}: ${de(x.km)} km</span><b class="${x.delta >= 0 ? 'good' : 'bad'}">${x.delta >= 0 ? '+' : '−'}${de(Math.abs(x.delta))} km</b></div>`).join('')}
-    <div class="row cmp"><span>Ziel-Pace: ${de(o.pace)} km</span><b class="${o.km - o.pace >= 0 ? 'good' : 'bad'}">${o.km - o.pace >= 0 ? '+' : '−'}${de(Math.abs(o.km - o.pace))} km</b></div></div>`;
+    <div class="row cmp"><span>Ziel-Pace: ${de(o.pace)} km</span><b class="${o.km - o.pace >= 0 ? 'good' : 'bad'}">${o.km - o.pace >= 0 ? '+' : '−'}${de(Math.abs(o.km - o.pace))} km</b></div></div>
+  ${pc ? pulseHtml(pc) : ''}`;
 }
 
 function pulseHtml(pc) {
@@ -108,14 +109,14 @@ export function bikesView(rides, bikes, wheelsets, links, changes, sel, limits, 
     <div class="row"><h2 class="bn">${esc(bike.full_name || bike.label)}</h2><span class="chip ${bike.status === 'aktiv' ? 'ok' : 'mute'}">${esc(bike.status)}</span></div>
     <div class="herobig"><b>${de(st.km)}</b><span>km</span><em>${de(st.n)} Fahrten</em></div>
     <div class="trio"><div><span>Erste Fahrt</span><b>${dmy(st.first)}</b></div><div><span>Letzte Fahrt</span><b>${dmy(st.last)}</b></div><div><span>Pause</span><b>${bike.status === 'aktiv' ? Math.max(0, Math.round((today - new Date(st.last + 'T00:00:00Z')) / 864e5)) + ' Tage' : '–'}</b></div></div></div>
+  <div class="card"><h2>Fahrten je Jahr und Länge</h2><div class="tbl"><table><thead><tr><th>Jahr</th><th>Fahrt.</th><th>km</th>${CLASSES.map((c) => `<th>${c[2]}</th>`).join('')}</tr></thead>
+    <tbody>${st.perYear.map((y) => `<tr><td>${y.year}</td><td>${y.n}</td><td>${de(y.km)}</td>${y.cls.map((c) => `<td>${c || '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+  <div class="card"><h2>Rekorde</h2><div class="recs">${rec(st.longest, 'Längste Fahrt', de(st.longest?.km || 0, 1), 'km', 'rek-km')}${rec(st.fastest, 'Schnellste Fahrt', de(st.fastest?.avg_speed || 0, 1), 'km/h', 'rek-kmh')}${rec(st.climb, 'Meiste Höhenmeter', de(st.climb?.elevation_m || 0), 'hm', 'rek-hm')}</div></div>
+  ${wsRows.length ? `<div class="card"><h2>Laufräder</h2>${wsRows.map((x) => `<div class="wsrow"><div class="row"><b>${esc(x.w.name)}</b><span class="chip ${x.w.status === 'aktiv' ? 'ok' : 'mute'}">${esc(x.w.status)}</span></div><div class="sub">${de(x.km)} km · ${de(x.n)} Fahrten auf diesem Rad</div><div class="bar thin"><i style="width:${x.km / wsMax * 100}%;${x.w.status === 'aktiv' ? '' : 'background:var(--prior)'}"></i></div></div>`).join('')}</div>` : ''}
   <div class="card"><div class="row"><h2>Verschleiß</h2><button class="link" data-open-settings>Grenzen ändern</button></div>${wearRows.length ? wearRows.map((w) => { const l = LV[w.lvl]; const P = PARTS[w.part];
     return `<div class="wear"><img src="${P[1]}" alt="" width="48" height="48"><div class="wb"><div class="row"><span class="wn">${P[0]}${w.owner ? ` <em>${esc(w.owner)}</em>` : ''}</span><span class="chip" style="background:${l[1]};color:${l[0]}">${l[2]}</span></div>
       <div class="bar thin"><i style="width:${w.pct}%;background:${l[0]}"></i><b style="left:${w.yellow / w.red * 100}%"></b></div>
-      <div class="row sub"><span>${de(w.km)} km seit ${dmy(w.since)}${w.fromFirstRide ? ' (erste Fahrt)' : ''}</span><span>gelb ${de(w.yellow)} · rot ${de(w.red)}</span></div></div></div>`; }).join('') : '<div class="sub">Keine Daten.</div>'}</div>
-  <div class="card"><h2>Rekorde</h2><div class="recs">${rec(st.longest, 'Längste Fahrt', de(st.longest?.km || 0, 1), 'km', 'rek-km')}${rec(st.fastest, 'Schnellste Fahrt', de(st.fastest?.avg_speed || 0, 1), 'km/h', 'rek-kmh')}${rec(st.climb, 'Meiste Höhenmeter', de(st.climb?.elevation_m || 0), 'hm', 'rek-hm')}</div></div>
-  ${wsRows.length ? `<div class="card"><h2>Laufräder</h2>${wsRows.map((x) => `<div class="wsrow"><div class="row"><b>${esc(x.w.name)}</b><span class="chip ${x.w.status === 'aktiv' ? 'ok' : 'mute'}">${esc(x.w.status)}</span></div><div class="sub">${de(x.km)} km · ${de(x.n)} Fahrten auf diesem Rad</div><div class="bar thin"><i style="width:${x.km / wsMax * 100}%;${x.w.status === 'aktiv' ? '' : 'background:var(--prior)'}"></i></div></div>`).join('')}</div>` : ''}
-  <div class="card"><h2>Fahrten je Jahr und Länge</h2><div class="tbl"><table><thead><tr><th>Jahr</th><th>Fahrt.</th><th>km</th>${CLASSES.map((c) => `<th>${c[2]}</th>`).join('')}</tr></thead>
-    <tbody>${st.perYear.map((y) => `<tr><td>${y.year}</td><td>${y.n}</td><td>${de(y.km)}</td>${y.cls.map((c) => `<td>${c || '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+      <div class="row sub"><span>${de(w.km)} km seit ${dmy(w.since)}${w.fromFirstRide ? ' (erste Fahrt)' : ''}</span><span>gelb ${de(w.yellow)} · rot ${de(w.red)}</span></div></div></div>`; }).join('') : '<div class="sub">Keine Daten.</div>'}</div>`;
 }
 
 export function ridesList(rides, bikes, year, q) {

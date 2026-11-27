@@ -44,7 +44,7 @@ async function stats() {
 }
 
 async function dataView() {
-  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-7</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
+  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-8</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
   <div class="card"><h2>Datenstand</h2><div id="st" class="sub">Wird geladen …</div></div>
   <div class="card"><h2>Rohdatei importieren</h2>
     <div class="sub">Die Datei wird nur in deinem Browser gelesen und unter deinem Login gespeichert.</div>
