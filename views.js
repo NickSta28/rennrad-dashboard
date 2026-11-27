@@ -67,15 +67,15 @@ export function overviewView(rides, bikes, year, today, settings = {}) {
     <div class="kpi"><span>Fahrten</span><b>${de(o.n)}</b><em>${o.over100} über 100 km</em></div>
     <div class="kpi"><span>Kilometer</span><b>${de(o.km)}</b><em>Ø ${de(o.n ? o.km / o.n : 0, 1)} km je Fahrt</em></div>
     <div class="kpi"><span>Höhenmeter</span><b>${de(o.hm)}</b><em>Ø ${de(o.n ? o.hm / o.n : 0)} Hm je Fahrt</em></div>
-    <div class="kpi"><span>Höchster Ø-Speed</span><b>${o.speed ? de(o.speed.avg_speed, 1) : '–'}<small> km/h</small></b><em>${o.speed ? 'Fahrt im ' + MONL[+o.speed.datum.slice(5, 7) - 1] : ''}</em></div></div>
+    ${o.speed ? `<button type="button" class="kpi kpibtn" data-ride="${o.speed.id}">` : '<div class="kpi">'}<span>Höchster Ø-Speed</span><b>${o.speed ? de(o.speed.avg_speed, 1) : '–'}<small> km/h</small></b><em>${o.speed ? 'Fahrt im ' + MONL[+o.speed.datum.slice(5, 7) - 1] : ''}</em>${o.speed ? '</button>' : '</div>'}</div>
   <div class="card"><h2>Letzte Fahrten</h2>${o.last.map((r) => rideRow(r, bikes, `${dm(r.datum)} · ${esc(bikes.find((b) => same(b.id, r.bike_id))?.label || '')} · ${de(r.elevation_m || 0)} Hm${r.avg_speed ? ' · ' + de(r.avg_speed, 1) + ' km/h' : ''}`)).join('')}</div>
-  <div class="card"><h2>Kilometer im Jahresverlauf</h2>${curve(o, avg)}${cmpBar}</div>
-  <div class="card"><h2>Kilometer je Monat</h2>${bars(o.mon, MON, { prev: o.prev, vlab: 8, fmt: (v) => de(Math.round(v)) })}
+  <div class="card"><h2>Kilometer im Jahresverlauf – ${year}</h2>${curve(o, avg)}${cmpBar}</div>
+  <div class="card"><h2>Kilometer je Monat – ${year}</h2>${bars(o.mon, MON, { prev: o.prev, vlab: 8, fmt: (v) => de(Math.round(v)) })}
     <div class="legend"><span><i style="background:var(--accent)"></i>${year}</span><span><i style="background:var(--prior)"></i>${year - 1}</span></div>
     <div class="sub">Bester Monat: ${MONL[o.best.m]} mit ${de(o.best.km)} km</div></div>
-  <div class="card"><h2>Fahrten je Wochentag</h2>${bars(o.wd, ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], { h: 70, vlab: 11, fmt: (v) => String(v) })}</div>
-  <div class="card"><h2>Anteil je Rad</h2>${o.shares.map((s) => `<div class="share"><div class="row"><span>${esc(s.bike?.label || '?')}</span><b>${de(s.km)} km · ${Math.round(s.pct)} %</b></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>`).join('')}</div>
-  <div class="card"><h2>Vergleich bis zum ${o.cur ? dm(today.toISOString().slice(0, 10)) : '31.12.'}</h2>${o.others.map((x) => `<div class="row cmp"><span>${x.year}: ${de(x.km)} km</span><b class="${x.delta >= 0 ? 'good' : 'bad'}">${x.delta >= 0 ? '+' : '−'}${de(Math.abs(x.delta))} km</b></div>`).join('')}
+  <div class="card"><h2>Fahrten je Wochentag – ${year}</h2>${bars(o.wd, ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], { h: 70, vlab: 11, fmt: (v) => String(v) })}</div>
+  <div class="card"><h2>Anteil je Rad – ${year}</h2>${o.shares.map((s) => `<div class="share"><div class="row"><span>${esc(s.bike?.label || '?')}</span><b>${de(s.km)} km · ${Math.round(s.pct)} %</b></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>`).join('')}</div>
+  <div class="card"><h2>Vergleich bis zum ${o.cur ? dm(today.toISOString().slice(0, 10)) : '31.12.'} – ${year}</h2>${o.others.map((x) => `<div class="row cmp"><span>${x.year}: ${de(x.km)} km</span><b class="${x.delta >= 0 ? 'good' : 'bad'}">${x.delta >= 0 ? '+' : '−'}${de(Math.abs(x.delta))} km</b></div>`).join('')}
     <div class="row cmp"><span>Ziel-Pace: ${de(o.pace)} km</span><b class="${o.km - o.pace >= 0 ? 'good' : 'bad'}">${o.km - o.pace >= 0 ? '+' : '−'}${de(Math.abs(o.km - o.pace))} km</b></div></div>
   ${pc ? pulseHtml(pc) : ''}`;
 }
@@ -103,12 +103,13 @@ export function bikesView(rides, bikes, wheelsets, links, changes, sel, limits, 
   const wsMax = Math.max(1, ...wsRows.map((x) => x.km));
   const wearRows = bikeWear(bike, rides, changes, wheelsets, limits);
   const rec = (r, label, val, unit, ico) => r ? `<button class="rec" data-ride="${r.id}"><span class="rico"><img src="img/${ico}.png" alt=""></span><div class="rv">${val}<small> ${unit}</small></div><div class="rt"><span>${label}</span><em>${dmy(r.datum)} · ${esc(r.name || '')}</em></div>${svg('next', 16, 2)}</button>` : '';
-  return header('Räder', today) + `
-  <div class="chips" role="tablist" aria-label="Rad wählen">${act.map((b) => `<button class="chipbtn${same(b.id, bike.id) ? ' on' : ''}${b.status !== 'aktiv' ? ' off' : ''}" data-bike="${b.id}" role="tab" aria-selected="${same(b.id, bike.id)}">${esc(b.label)}</button>`).join('')}</div>
+   return `<div class="stick">` + header('Räder', today) + `
+  <div class="chips" role="tablist" aria-label="Rad wählen">${act.map((b) => `<button class="chipbtn${same(b.id, bike.id) ? ' on' : ''}${b.status !== 'aktiv' ? ' off' : ''}" data-bike="${b.id}" role="tab" aria-selected="${same(b.id, bike.id)}">${esc(b.label)}</button>`).join('')}</div></div>
   <div class="card tintcard">${bike.photo_path ? `<img class="bikeimg" src="${esc(bike.photo_path)}" alt="${esc(bike.full_name)}" loading="lazy">` : '<div class="ph" aria-hidden="true">🚲</div>'}
     <div class="row"><h2 class="bn">${esc(bike.full_name || bike.label)}</h2><span class="chip ${bike.status === 'aktiv' ? 'ok' : 'mute'}">${esc(bike.status)}</span></div>
     <div class="herobig"><b>${de(st.km)}</b><span>km</span><em>${de(st.n)} Fahrten</em></div>
     <div class="trio"><div><span>Erste Fahrt</span><b>${dmy(st.first)}</b></div><div><span>Letzte Fahrt</span><b>${dmy(st.last)}</b></div><div><span>Pause</span><b>${bike.status === 'aktiv' ? Math.max(0, Math.round((today - new Date(st.last + 'T00:00:00Z')) / 864e5)) + ' Tage' : '–'}</b></div></div></div>
+  <div class="card"><h2>Letzte Fahrten</h2>${rides.filter((r) => same(r.bike_id, bike.id)).sort((a, b) => (b.datum + (b.uhrzeit || '')).localeCompare(a.datum + (a.uhrzeit || ''))).slice(0, 5).map((r) => rideRow(r, bikes, `${dm(r.datum)} · ${de(r.elevation_m || 0)} Hm${r.avg_speed ? ' · ' + de(r.avg_speed, 1) + ' km/h' : ''}`)).join('')}</div>
   <div class="card"><h2>Fahrten je Jahr und Länge</h2><div class="tbl"><table><thead><tr><th>Jahr</th><th>Fahrt.</th><th>km</th>${CLASSES.map((c) => `<th>${c[2]}</th>`).join('')}</tr></thead>
     <tbody>${st.perYear.map((y) => `<tr><td>${y.year}</td><td>${y.n}</td><td>${de(y.km)}</td>${y.cls.map((c) => `<td>${c || '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
   <div class="card"><h2>Rekorde</h2><div class="recs">${rec(st.longest, 'Längste Fahrt', de(st.longest?.km || 0, 1), 'km', 'rek-km')}${rec(st.fastest, 'Schnellste Fahrt', de(st.fastest?.avg_speed || 0, 1), 'km/h', 'rek-kmh')}${rec(st.climb, 'Meiste Höhenmeter', de(st.climb?.elevation_m || 0), 'hm', 'rek-hm')}</div></div>
@@ -150,7 +151,8 @@ export function activityView(r, bikes, wheelsets) {
   ${meas.length ? `<div class="card list">${meas.join('')}</div>` : ''}
   ${r.beschreibung ? `<div class="card"><div class="sub">Beschreibung</div><p class="desc">${esc(r.beschreibung)}</p></div>` : ''}
   ${r.strava_activity_id ? `<div class="card list">${row('Strava-ID', r.strava_activity_id)}</div>` : ''}
-  ${r.strava_activity_id ? `<a class="linkbtn" href="https://www.strava.com/activities/${r.strava_activity_id}" target="_blank" rel="noopener">In Strava öffnen</a>` : ''}`;
+  ${r.strava_activity_id ? `<a class="linkbtn" href="https://www.strava.com/activities/${r.strava_activity_id}" target="_blank" rel="noopener">In Strava öffnen</a>` : ''}
+  <div id="delbox"><button type="button" class="dangerbtn" id="del">Aktivität löschen</button></div>`;
 }
 
 export function settingsSheet(accent, limits, goal) {
@@ -169,7 +171,7 @@ export function settingsSheet(accent, limits, goal) {
 export function newView(bikes, wheelsets, links, rides, today, form = {}) {
   const act = bikes.filter((b) => b.status === 'aktiv'); const sel = form.bike || act[0]?.id;
   const wsFor = (bid) => links.filter((l) => same(l.bike_id, bid)).map((l) => wheelsets.find((w) => same(w.id, l.wheelset_id))).filter(Boolean);
-  const fld = (id, lab, ph, mode = 'text', unit = '', span = '', v = '') => `<div class="fld" style="${span}"><label for="${id}">${lab}</label><div class="inp"><input id="${id}" inputmode="${mode}" placeholder="${ph}" value="${esc(v)}" autocomplete="off"><span>${unit}</span></div></div>`;
+  const fld = (id, lab, ph, mode = 'text', unit = '', span = '', v = '') => `<div class="fld" style="${span}"><label for="${id}">${lab}</label><div class="inp"><input id="${id}" ${mode === 'wheel' ? 'readonly data-wheel inputmode="none"' : `inputmode="${mode}"`} placeholder="${ph}" value="${esc(v)}" autocomplete="off"><span>${unit}</span></div></div>`;
   const opt = '<span class="opt">optional</span>';
   const chips = (key, list, selId) => `<div class="chiprow" data-group="${key}">${list.map((c) => `<button type="button" class="chipbtn${same(c.id, selId) ? ' on' : ''}" data-v="${esc(c.id)}">${esc(c.label)}</button>`).join('')}</div>`;
   const today10 = today.toISOString().slice(0, 10);
@@ -182,7 +184,7 @@ export function newView(bikes, wheelsets, links, rides, today, form = {}) {
     <div class="g2">${fld('f-place', 'Ort', 'z. B. München')}</div><div class="sub">Art</div>${chips('art', ['Training', 'Rennen', 'virtuell'].map((a) => ({ id: a, label: a })), form.art || 'Training')}</div>
   <button type="button" class="ghostbtn tint" id="more" aria-expanded="false">Details &amp; Messwerte ▾</button>
   <div id="morebox" hidden>
-    <div class="card"><h2>Details ${opt}</h2><div class="g2">${fld('f-name', 'Name', 'Fahrtname', 'text', '', 'grid-column:1/-1')}${fld('f-time', 'Uhrzeit', '08:30', 'numeric', 'Uhr')}${fld('f-hm', 'Höhenmeter', '0', 'numeric', 'hm')}${fld('f-fz', 'Fahrtzeit', '2:32:10', 'numeric', 'h:mm:ss')}${fld('f-gz', 'Gesamtzeit', '2:45:00', 'numeric', 'h:mm:ss')}${fld('f-avg', 'Ø Tempo', 'automatisch', 'decimal', 'km/h')}${fld('f-mx', 'Max. Tempo', '0,0', 'decimal', 'km/h')}${fld('f-pw', 'Ø Leistung', '0', 'numeric', 'W')}</div>${fld('f-desc', 'Beschreibung', 'Notizen zur Fahrt')}</div>
+    <div class="card"><h2>Details ${opt}</h2><div class="g2">${fld('f-name', 'Name', 'Fahrtname', 'text', '', 'grid-column:1/-1')}${fld('f-time', 'Uhrzeit', 'hh:mm', 'wheel', 'Uhr')}${fld('f-hm', 'Höhenmeter', '0', 'numeric', 'hm')}${fld('f-fz', 'Fahrtzeit', 'h:mm:ss', 'wheel', '')}${fld('f-gz', 'Gesamtzeit', 'h:mm:ss', 'wheel', '')}${fld('f-avg', 'Ø Tempo', 'automatisch', 'decimal', 'km/h')}${fld('f-mx', 'Max. Tempo', '0,0', 'decimal', 'km/h')}${fld('f-pw', 'Ø Leistung', '0', 'numeric', 'W')}</div>${fld('f-desc', 'Beschreibung', 'Notizen zur Fahrt')}</div>
     <div class="card"><h2>Messwerte ${opt}</h2><div class="g2">${fld('f-hra', 'Ø Puls', '–', 'numeric', 'bpm')}${fld('f-hrm', 'Max. Puls', '–', 'numeric', 'bpm')}${fld('f-cada', 'Ø Trittfrequenz', '–', 'numeric', 'rpm')}${fld('f-cadm', 'Max. Trittfrequenz', '–', 'numeric', 'rpm')}${fld('f-tmp', 'Temperatur', '–', 'decimal', '°C')}${fld('f-np', 'Gewichtete Leistung', '–', 'numeric', 'W')}</div></div></div>
   <div class="card"><h2>Teile gewechselt?</h2><div class="sub">Setzt den Zähler des Teils ab dieser Fahrt auf 0 km.</div><div class="g2">${chg}</div></div>
   <div id="err"></div><button type="button" id="save" class="savebtn">Fahrt speichern</button>`;

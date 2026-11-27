@@ -1,9 +1,10 @@
+import { openWheel } from './wheel.js?v=10';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=9';
-import { parseRows, summary, runImport } from './import.js?v=9';
-import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=9';
-import { years, DEFAULT_LIMITS } from './compute.js?v=9';
-import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=9';
+import { SUPABASE_URL, SUPABASE_KEY } from './config.js?v=10';
+import { parseRows, summary, runImport } from './import.js?v=10';
+import { overviewView, bikesView, ridesView, ridesList, activityView, settingsSheet, newView, de as _de } from './views.js?v=10';
+import { years, DEFAULT_LIMITS } from './compute.js?v=10';
+import { applyTheme, savedAccent, ACCENTS } from './theme.js?v=10';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 const root = document.getElementById('app');
@@ -44,7 +45,7 @@ async function stats() {
 }
 
 async function dataView() {
-  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-9</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
+  root.innerHTML = `<div class="top"><div><div class="sub">Daten · Version 27.11.-10</div><h1>Rennrad Dashboard</h1></div><button class="ghost" id="out">Abmelden</button></div>
   <div class="card"><h2>Datenstand</h2><div id="st" class="sub">Wird geladen …</div></div>
   <div class="card"><h2>Rohdatei importieren</h2>
     <div class="sub">Die Datei wird nur in deinem Browser gelesen und unter deinem Login gespeichert.</div>
@@ -134,7 +135,19 @@ async function shell() {
     const r = d.rides.find((x) => x.id === state.view.id);
     if (!r) { state.view = null; return shell(); }
     root.innerHTML = activityView(r, d.bikes, d.wheelsets); tabbar();
-    root.querySelector('#back').onclick = closeView; return;
+    root.querySelector('#back').onclick = closeView;
+    const box = root.querySelector('#delbox');
+    box.querySelector('#del').onclick = () => {
+      box.innerHTML = `<div class="delask" role="alert">Diese Aktivität endgültig löschen?<div class="btnrow"><button type="button" class="dangerbtn" id="del-yes">Ja, löschen</button><button type="button" class="ghost" id="del-no">Abbrechen</button></div><div id="del-err"></div></div>`;
+      box.querySelector('#del-no').onclick = () => shell();
+      box.querySelector('#del-yes').onclick = async (ev) => {
+        ev.target.disabled = true; ev.target.textContent = 'Wird gelöscht …';
+        const { error } = await sb.schema('rad').from('rides').delete().eq('id', Number(r.id));
+        if (error) { box.querySelector('#del-err').innerHTML = `<div class="err">Löschen fehlgeschlagen: ${esc(error.message)}</div>`; ev.target.disabled = false; ev.target.textContent = 'Ja, löschen'; return; }
+        d.rides = d.rides.filter((x) => x.id !== r.id); state.view = null; shell(); window.scrollTo(0, state.scroll || 0);
+      };
+    };
+    return;
   }
   if (state.view?.type === 'new') { root.innerHTML = newView(d.bikes, d.wheelsets, d.links, d.rides, today, state.view.form); tabbar(); bindNew(); return; }
   const yrs = years(d.rides); if (!state.year) state.year = yrs[0] || today.getFullYear();
@@ -194,6 +207,17 @@ function bindNew() {
     box.querySelectorAll('.chipbtn').forEach((b) => { b.onclick = () => exclusive(b); });
   };
   q('#back').onclick = closeView;
+  root.querySelectorAll('[data-wheel]').forEach((inp) => {
+    const isTime = inp.id === 'f-time';
+    const cols = isTime ? [{ label: 'Std', n: 24, pad: 2 }, { label: 'Min', n: 60, pad: 2 }] : [{ label: 'Std', n: 24 }, { label: 'Min', n: 60, pad: 2 }, { label: 'Sek', n: 60, pad: 2 }];
+    inp.onclick = () => {
+      const cur = inp.value.split(':').map(Number);
+      const def = isTime ? [8, 0] : (inp.id === 'f-gz' && q('#f-fz').value ? q('#f-fz').value.split(':').map(Number) : [1, 0, 0]);
+      openWheel({ title: inp.closest('.fld').querySelector('label').textContent, cols, value: inp.value ? cur : def,
+        onDone: (v) => { inp.value = isTime ? `${String(v[0]).padStart(2, '0')}:${String(v[1]).padStart(2, '0')}` : `${v[0]}:${String(v[1]).padStart(2, '0')}:${String(v[2]).padStart(2, '0')}`; },
+        onClear: () => { inp.value = ''; } });
+    };
+  });
   root.querySelectorAll('[data-group="art"] .chipbtn').forEach((b) => { b.onclick = () => exclusive(b); });
   root.querySelectorAll('[data-group="bike"] .chipbtn').forEach((b) => { b.onclick = () => { exclusive(b); drawWs(b.dataset.v, lastRide(b.dataset.v)?.wheelset_id); }; });
   root.querySelectorAll('[data-group="ws"] .chipbtn').forEach((b) => { b.onclick = () => exclusive(b); });

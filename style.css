@@ -138,3 +138,18 @@ nav button{font-size:13px;padding:0 6px}
 .card:not(.hero):not(.tintcard)>h2:first-child,.card:not(.hero):not(.tintcard)>.row:first-child:has(>h2){font-size:15px}
 .card>.row:first-child:has(>h2) h2{font-size:15px}
 .rec{min-height:54px;padding:6px 0;gap:12px}.rec .rico{width:38px;height:38px}.rec .rv{width:88px}
+.stick{position:sticky;top:0;z-index:9;background:var(--bg);margin:calc(-1 * max(24px,env(safe-area-inset-top))) -20px 0;padding:max(24px,env(safe-area-inset-top)) 20px 8px}
+.kpibtn{text-align:left;font:inherit;color:inherit;cursor:pointer}
+.dangerbtn{width:100%;margin-top:18px;background:#fff;color:#C0392B;border:1px solid #E7B9B3;min-height:48px;border-radius:14px;font-weight:600}
+.delask{margin-top:18px;padding:14px;border:1px solid #E7B9B3;background:#FDF1EF;border-radius:14px;font-weight:600}.delask .btnrow{display:flex;gap:8px;margin-top:10px}.delask .dangerbtn{margin:0;background:#C0392B;color:#fff}
+.fld input[readonly]{cursor:pointer}
+.wheelwrap{position:fixed;inset:0;z-index:40}.wback{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.wsheet{position:absolute;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 20px max(24px,env(safe-area-inset-bottom))}
+.wtitle{font:700 17px 'Inter Tight',Inter,sans-serif;text-align:center;margin-bottom:6px}
+.wcols{position:relative;display:flex;justify-content:center;align-items:flex-end;gap:6px}
+.wcolbox{width:84px;text-align:center}.wlab{font-size:12px;color:var(--mute);margin-bottom:2px}.wsep{font:700 22px Inter,sans-serif;padding-bottom:92px}
+.wcol{height:200px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}.wcol::-webkit-scrollbar{display:none}
+.wpad{height:80px}.wit{height:40px;line-height:40px;font:600 22px Inter,sans-serif;scroll-snap-align:center;font-variant-numeric:tabular-nums}
+.wband{position:absolute;left:8px;right:8px;bottom:80px;height:40px;background:var(--tint);border-radius:10px;z-index:-1}
+.wbtns{display:flex;gap:8px;margin-top:14px}.wbtns button{flex:1;margin:0}
+.wcols{isolation:isolate}
